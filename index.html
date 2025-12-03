@@ -1,41 +1,259 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2026 新春孝親之旅 - 鳥取 & 有馬溫泉</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Zen+Maru+Gothic:wght@400;700&display=swap" rel="stylesheet">
+    
     <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              'zen-bg': '#f4f1ea', // Washi paper off-white
-              'zen-blue': '#1e3a5f', // Indigo
-              'zen-pink': '#e09198', // Sakura
-              'zen-text': '#4a4a4a', // Dark Gray
-              'zen-accent': '#d4a373', // Light wood
-            },
-            fontFamily: {
-              serif: ['"Noto Serif JP"', 'serif'],
-              sans: ['"Zen Maru Gothic"', 'sans-serif'],
-            },
-          }
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'zen-bg': '#f4f1ea', 
+                        'zen-blue': '#1e3a5f',
+                        'zen-pink': '#e09198',
+                        'zen-text': '#4a4a4a',
+                        'zen-accent': '#d4a373',
+                    },
+                    fontFamily: {
+                        serif: ['"Noto Serif JP"', 'serif'],
+                        sans: ['"Zen Maru Gothic"', 'sans-serif'],
+                    }
+                }
+            }
         }
-      }
     </script>
-  <script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0"
-  }
-}
-</script>
+    <style>
+        body { background-color: #f4f1ea; color: #4a4a4a; font-family: 'Zen Maru Gothic', sans-serif; }
+        .font-serif-jp { font-family: 'Noto Serif JP', serif; }
+        
+        /* 編輯模式下的樣式 */
+        .editable-active {
+            border: 1px dashed #e09198;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 2px 4px;
+            border-radius: 4px;
+            cursor: text;
+        }
+        .editable-active:focus {
+            outline: 2px solid #1e3a5f;
+            background-color: #fff;
+            border-style: solid;
+        }
+    </style>
 </head>
-  <body class="bg-zen-bg text-zen-text font-sans antialiased">
-    <div id="root"></div>
-  </body>
+<body class="bg-zen-bg text-zen-text antialiased min-h-screen pb-20">
+    <div id="app" class="max-w-md mx-auto bg-white min-h-screen shadow-2xl relative overflow-hidden sm:max-w-2xl">
+        
+        <header class="bg-zen-blue text-white p-8 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none" style="background-image: url('https://www.transparenttextures.com/patterns/seigaiha.png');"></div>
+            <h1 class="text-3xl font-serif-jp font-bold mb-2 tracking-widest">新春孝親之旅</h1>
+            <p class="text-zen-accent text-sm tracking-wider uppercase mb-4">Tottori & Arima Onsen</p>
+            <div class="inline-block border border-zen-accent/50 px-4 py-1 rounded-full text-xs bg-zen-blue/50 backdrop-blur-sm">
+                2026.02.13 - 02.17
+            </div>
+            
+            <div class="mt-6 grid grid-cols-4 gap-2 text-center max-w-xs mx-auto">
+                <div class="bg-white/10 rounded p-2 backdrop-blur-sm">
+                    <span class="block text-2xl font-bold font-serif-jp">{{ countdown.days }}</span>
+                    <span class="text-xs opacity-70">天</span>
+                </div>
+                <div class="bg-white/10 rounded p-2 backdrop-blur-sm">
+                    <span class="block text-2xl font-bold font-serif-jp">{{ countdown.hours }}</span>
+                    <span class="text-xs opacity-70">時</span>
+                </div>
+                <div class="bg-white/10 rounded p-2 backdrop-blur-sm">
+                    <span class="block text-2xl font-bold font-serif-jp">{{ countdown.minutes }}</span>
+                    <span class="text-xs opacity-70">分</span>
+                </div>
+                <div class="bg-white/10 rounded p-2 backdrop-blur-sm">
+                    <span class="block text-2xl font-bold font-serif-jp">{{ countdown.seconds }}</span>
+                    <span class="text-xs opacity-70">秒</span>
+                </div>
+            </div>
+        </header>
+
+        <div v-if="isEditMode" class="bg-zen-pink/20 p-2 text-center text-xs text-zen-blue font-bold sticky top-0 z-20 backdrop-blur">
+            ⚠️ 編輯模式開啟中：點擊文字即可修改
+            <button @click="resetSchedule" class="ml-2 underline text-red-600">重置回預設值</button>
+        </div>
+
+        <main class="p-4 sm:p-8 space-y-6">
+            <div v-for="(day, index) in schedule" :key="index" class="relative pl-4 border-l-2 border-zen-pink/30 pb-4 last:border-0 last:pb-0">
+                <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-zen-pink border-4 border-zen-bg"></div>
+                
+                <div class="mb-3 flex items-baseline justify-between cursor-pointer select-none" @click="toggleDay(index)">
+                    <h2 class="text-xl font-serif-jp font-bold text-zen-blue">Day {{ index + 1 }}</h2>
+                    <span class="text-sm text-gray-400 font-medium">{{ day.date }}</span>
+                </div>
+                
+                <div v-show="day.isOpen" class="space-y-3 transition-all duration-300">
+                    <div v-for="(item, i) in day.events" :key="i" class="bg-zen-bg/50 p-4 rounded-lg hover:bg-zen-bg hover:shadow-md transition-all group">
+                        <div class="flex justify-between items-start mb-2">
+                            <span 
+                                class="inline-block px-2 py-0.5 bg-zen-blue text-white text-xs rounded transition-all"
+                                :class="{ 'editable-active': isEditMode }"
+                                :contenteditable="isEditMode"
+                                @blur="updateEvent(index, i, 'time', $event)"
+                            >{{ item.time }}</span>
+                            
+                            <a v-if="item.location && !isEditMode" :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.location)" target="_blank" class="text-zen-blue hover:text-zen-pink transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </a>
+                        </div>
+                        
+                        <div class="relative">
+                             <h3 class="font-bold text-gray-800 mb-1 transition-all" 
+                                :class="{ 'editable-active': isEditMode }"
+                                :contenteditable="isEditMode" 
+                                @blur="updateEvent(index, i, 'title', $event)">{{ item.title }}</h3>
+                             <p class="text-sm text-gray-600 leading-relaxed transition-all"
+                                :class="{ 'editable-active': isEditMode }"
+                                :contenteditable="isEditMode"
+                                @blur="updateEvent(index, i, 'desc', $event)">{{ item.desc }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <button 
+            @click="isEditMode = !isEditMode"
+            class="fixed bottom-6 right-6 z-50 rounded-full px-4 py-3 shadow-lg font-bold flex items-center gap-2 transition-all transform hover:scale-105"
+            :class="isEditMode ? 'bg-zen-pink text-white ring-4 ring-zen-pink/30' : 'bg-zen-blue text-white'"
+        >
+            <span v-if="!isEditMode">✏️ 編輯</span>
+            <span v-else>💾 完成</span>
+        </button>
+
+        <footer class="text-center p-6 text-xs text-gray-400 border-t border-gray-100 mt-8 mb-12">
+            <p>資料僅儲存於本機瀏覽器 • Family Trip 2026</p>
+        </footer>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const isEditMode = ref(false);
+                
+                // 預設行程資料
+                const defaultSchedule = [
+                    {
+                        date: "2/13 (四)", isOpen: true,
+                        events: [
+                            { time: "16:50", title: "抵達米子機場", desc: "領取行李，出關。", location: "米子鬼太郎空港" },
+                            { time: "17:40", title: "前往皆生溫泉", desc: "搭乘計程車直達旅館 (約25分)。", location: "皆生温泉" },
+                            { time: "18:30", title: "入住：華水亭 / 游月", desc: "辦理入住，稍作休息。", location: "皆生温泉 華水亭" },
+                            { time: "19:00", title: "晚餐：螃蟹會席", desc: "享用第一頓豐盛的螃蟹大餐！", location: "" }
+                        ]
+                    },
+                    {
+                        date: "2/14 (五)", isOpen: true,
+                        events: [
+                            { time: "09:30", title: "出發", desc: "搭計程車前往米子車站。", location: "米子駅" },
+                            { time: "10:00", title: "JR 超級松風號", desc: "前往鳥取站 (約60分)。", location: "鳥取駅" },
+                            { time: "11:30", title: "午餐：賀露港海鮮市場", desc: "新鮮海鮮丼飯，逛農產品市集。", location: "鳥取港海鮮市場 かろいち" },
+                            { time: "13:50", title: "渡邊美術館", desc: "欣賞壯觀的武士盔甲收藏。", location: "渡辺美術館" },
+                            { time: "15:20", title: "鳥取城跡 & 仁風閣", desc: "久松公園散步，參觀洋風建築外觀。", location: "鳥取城跡" },
+                            { time: "18:30", title: "晚餐：炭火燒肉 福ふく", desc: "必吃！頂級鳥取和牛燒肉。", location: "炭火焼き 福ふく" },
+                            { time: "20:00", title: "入住：Green Hotel Morris", desc: "鳥取車站旁，有大浴場。", location: "グリーンホテルモーリス" }
+                        ]
+                    },
+                    {
+                        date: "2/15 (六)", isOpen: true,
+                        events: [
+                            { time: "10:00", title: "鳥取沙丘", desc: "早晨的沙丘，爬上馬之背看海。", location: "鳥取砂丘" },
+                            { time: "12:00", title: "午餐", desc: "沙丘周邊餐廳用餐。", location: "" },
+                            { time: "13:00", title: "多鯰池皮艇體驗", desc: "冬季划船體驗 (請務必戴手套帽子)。", location: "多鯰ヶ池" },
+                            { time: "16:00", title: "返回市區休息", desc: "回飯店稍作休息，或逛車站周邊。", location: "" },
+                            { time: "18:00", title: "晚餐：自由覓食", desc: "居酒屋或車站便當。", location: "" }
+                        ]
+                    },
+                    {
+                        date: "2/16 (日) 除夕", isOpen: true,
+                        events: [
+                            { time: "09:30", title: "退房 & 移動", desc: "搭乘 JR 超級白兔號前往神戶三宮。", location: "三ノ宮駅" },
+                            { time: "13:00", title: "午餐 & 寄放行李", desc: "三宮站寄放行李，簡單午餐。", location: "" },
+                            { time: "14:30", title: "北野異人館", desc: "感受神戶洋風年味，散步拍照。", location: "北野異人館街" },
+                            { time: "16:00", title: "前往有馬溫泉", desc: "搭乘巴士或電車上山。", location: "有馬温泉" },
+                            { time: "18:30", title: "除夕圍爐晚宴", desc: "入住有馬格蘭/兵衛向陽閣，享用神戶牛懷石！", location: "有馬グランドホテル" }
+                        ]
+                    },
+                    {
+                        date: "2/17 (一)", isOpen: true,
+                        events: [
+                            { time: "10:00", title: "下山", desc: "退房，搭巴士回三宮。", location: "" },
+                            { time: "11:00", title: "海上高速船", desc: "PortLiner -> 神戶機場 -> 搭船去關空。", location: "神戸-関空ベイ・シャトル" },
+                            { time: "11:45", title: "抵達關西機場", desc: "辦理登機，逛免稅店。", location: "関西国際空港" },
+                            { time: "14:50", title: "起飛返台", desc: "平安回家。", location: "" }
+                        ]
+                    }
+                ];
+
+                const schedule = ref([...defaultSchedule]);
+                const countdown = ref({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+                onMounted(() => {
+                    // 讀取存檔
+                    const saved = localStorage.getItem('trip2026_schedule');
+                    if (saved) {
+                        schedule.value = JSON.parse(saved);
+                    }
+                    startCountdown();
+                });
+
+                // 更新並存檔
+                const updateEvent = (dayIndex, eventIndex, field, event) => {
+                    if (!isEditMode.value) return;
+                    schedule.value[dayIndex].events[eventIndex][field] = event.target.innerText;
+                    localStorage.setItem('trip2026_schedule', JSON.stringify(schedule.value));
+                };
+
+                // 重置功能
+                const resetSchedule = () => {
+                    if(confirm('確定要將所有行程恢復成預設值嗎？您手動輸入的內容將會消失。')) {
+                        schedule.value = JSON.parse(JSON.stringify(defaultSchedule)); // Deep copy
+                        localStorage.removeItem('trip2026_schedule');
+                        isEditMode.value = false;
+                        location.reload();
+                    }
+                };
+
+                const toggleDay = (index) => {
+                    schedule.value[index].isOpen = !schedule.value[index].isOpen;
+                };
+
+                const startCountdown = () => {
+                    const targetDate = new Date('2026-02-13T16:50:00').getTime();
+                    setInterval(() => {
+                        const now = new Date().getTime();
+                        const distance = targetDate - now;
+                        if (distance < 0) {
+                            countdown.value = { days: 0, hours: 0, minutes: 0, seconds: 0 };
+                            return;
+                        }
+                        countdown.value.days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                        countdown.value.hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        countdown.value.minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                        countdown.value.seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    }, 1000);
+                };
+
+                return {
+                    schedule, countdown, isEditMode,
+                    updateEvent, toggleDay, resetSchedule
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
 </html>
